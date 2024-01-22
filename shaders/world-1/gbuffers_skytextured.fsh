@@ -15,6 +15,7 @@ varying vec4 color;
 uniform sampler2D texture;
 
 #include "lib/color/lightColor.glsl"
+#include "lib/color/lightColorDynamic.glsl"
 
 void main(){
 	//Texture

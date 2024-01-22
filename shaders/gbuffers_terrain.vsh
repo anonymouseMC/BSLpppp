@@ -42,16 +42,6 @@ varying vec3 sunVec;
 
 varying vec4 color;
 
-#ifdef RPSupport
-varying float dist;
-varying vec3 binormal;
-varying vec3 tangent;
-varying vec3 viewVector;
-varying vec4 vtexcoordam;
-varying vec4 vtexcoord;
-attribute vec4 at_tangent;
-#endif
-
 attribute vec4 mc_Entity;
 attribute vec4 mc_midTexCoord;
 
@@ -129,10 +119,12 @@ uniform float viewHeight;
 #include "lib/common/worldCurvature.glsl"
 #endif
 
+#include "lib/common/materialDef.glsl"
+
 void main(){
 	texcoord = (gl_TextureMatrix[0] * gl_MultiTexCoord0).st;
 	
-	mat = 0.0;
+	mat = block_mat;
 	recolor = 0.0;
 	
 	float istopv = 0.0;
@@ -187,13 +179,13 @@ void main(){
 	
 	//Foliage
 	if (mc_Entity.x == 31.0 || mc_Entity.x == 6.0 || mc_Entity.x == 59.0 || mc_Entity.x == 175.0 || mc_Entity.x == 176.0 || mc_Entity.x == 18.0 || mc_Entity.x == 106.0 || mc_Entity.x == 111.0 || mc_Entity.x == 83.0)
-	mat = 1.0;
+	mat = foliage_mat;
 	//Emissive
-	if (mc_Entity.x == 55.0 || mc_Entity.x == 213.0 || mc_Entity.x == 76.0 ||  mc_Entity.x == 62.0 || mc_Entity.x == 50.0 || mc_Entity.x == 91.0 || mc_Entity.x == 89.0 || mc_Entity.x == 51.0) mat = 2.0;
+	if (mc_Entity.x == 55.0 || mc_Entity.x == 213.0 || mc_Entity.x == 76.0 ||  mc_Entity.x == 62.0 || mc_Entity.x == 50.0 || mc_Entity.x == 91.0 || mc_Entity.x == 89.0 || mc_Entity.x == 51.0) mat = emissive_mat;
 	//Lava
-	if (mc_Entity.x == 10.0) mat = 3.0;
+	if (mc_Entity.x == 10.0) mat = lava_mat;
 	//Metals	
-	if (mc_Entity.x == 42.0) mat = 4.0;
+	if (mc_Entity.x == 42.0) mat = metal_mat;
 	//Recolor
 	if (mc_Entity.x == 213.0 || mc_Entity.x == 89.0 || mc_Entity.x == 138.0) recolor = 1.0;
 
@@ -230,24 +222,4 @@ void main(){
 	
 	upVec = normalize(gbufferModelView[1].xyz);
 	//sunVec = normalize(sunPosition);
-	
-	#ifdef RPSupport
-	vec2 midcoord = (gl_TextureMatrix[0] *  mc_midTexCoord).st;
-	vec2 texcoordminusmid = texcoord-midcoord;
-	vtexcoordam.pq  = abs(texcoordminusmid)*2;
-	vtexcoordam.st  = min(texcoord,midcoord-texcoordminusmid);
-	vtexcoord.xy    = sign(texcoordminusmid)*0.5+0.5;
-	
-	tangent = normalize(gl_NormalMatrix * at_tangent.xyz);
-	binormal = normalize(gl_NormalMatrix * cross(at_tangent.xyz, gl_Normal.xyz) * at_tangent.w);
-	
-	mat3 tbnMatrix = mat3(tangent.x, binormal.x, normal.x,
-								  tangent.y, binormal.y, normal.y,
-						     	  tangent.z, binormal.z, normal.z);
-								  
-	viewVector = ( gl_ModelViewMatrix * gl_Vertex).xyz;
-	viewVector = (tbnMatrix * viewVector);
-	
-	dist = length(gl_ModelViewMatrix * gl_Vertex);
-	#endif
 }

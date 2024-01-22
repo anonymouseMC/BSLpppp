@@ -36,11 +36,6 @@ varying vec3 wpos;
 
 varying vec4 color;
 
-#ifdef RPSupport
-varying vec4 vtexcoordam;
-varying vec4 vtexcoord;
-#endif
-
 attribute vec4 at_tangent;
 attribute vec4 mc_Entity;
 attribute vec4 mc_midTexCoord;
@@ -76,18 +71,19 @@ uniform float viewHeight;
 #ifdef WorldCurvature
 #include "lib/common/worldCurvature.glsl"
 #endif
+#include "lib/common/materialDef.glsl"
 
 void main(){
 	texcoord = (gl_TextureMatrix[0] * gl_MultiTexCoord0).st;
 	
-	mat = 0.0f;
+	mat = none_mat;
 	
 	vec4 position = gbufferModelViewInverse * gl_ModelViewMatrix * gl_Vertex;
 	vec3 worldpos = position.xyz + cameraPosition;
 	wpos = worldpos;
 	
 	if (mc_Entity.x == 8.0){
-		mat = 1.0;
+		mat = water_mat;
 		float fy = fract(worldpos.y + 0.001);
 		
 		#ifdef WavingWater
@@ -98,14 +94,14 @@ void main(){
 		#endif
 	}
 	
-	if (mc_Entity.x == 79.0) mat = 2.0;
+	if (mc_Entity.x == 79.0) mat = trans_mat;
 
 	#ifdef WorldCurvature
 	position.y -= worldCurvature(position.xz);
 	#endif
 	
 	gl_Position = gl_ProjectionMatrix * gbufferModelView * position;
-	if (mat == 0.0) gl_Position.z -= 0.00001;
+	if (mat == none_mat) gl_Position.z -= 0.00001;
 	
 	#if AA == 2
 	gl_Position.xy = taaJitter(gl_Position.xy,gl_Position.w);
@@ -124,15 +120,7 @@ void main(){
 	sunVec = normalize((gbufferModelView * vec4(vec3(-sin(ang), cos(ang) * sunRotationData) * 2000.0, 1.0)).xyz);
 	
 	upVec = normalize(gbufferModelView[1].xyz);
-	//sunVec = normalize(sunPosition);
-	
-	#ifdef RPSupport
-	vec2 midcoord = (gl_TextureMatrix[0] *  mc_midTexCoord).st;
-	vec2 texcoordminusmid = texcoord-midcoord;
-	vtexcoordam.pq  = abs(texcoordminusmid)*2;
-	vtexcoordam.st  = min(texcoord,midcoord-texcoordminusmid);
-	vtexcoord.xy    = sign(texcoordminusmid)*0.5+0.5;
-	#endif
+	//timeVec = normalize(sunPosition);
 	
 	tangent = normalize(gl_NormalMatrix * at_tangent.xyz);
 	binormal = normalize(gl_NormalMatrix * cross(at_tangent.xyz, gl_Normal.xyz) * at_tangent.w);

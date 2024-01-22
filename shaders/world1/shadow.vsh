@@ -19,7 +19,7 @@ https://www.bitslablab.com
 #define AnimationSpeed 1.00 //[0.25 0.50 0.75 1.00 1.25 1.50 1.75 2.00 2.50 3.00 3.50 4.00 5.00 6.00 7.00 8.00]
 
 const float shadowDistance = 256.0; //[128.0 256.0 512.0 1024.0]
-const int shadowMapResolution = 2048; //[1024 2048 3072 4096 8192]
+const int shadowMapResolution = 2048; //[128.0 144.0 160.0 176.0 192.0 208.0 224.0 240.0 256.0 512.0 1024.0]
 
 const float shadowMapBias = 1.0-25.6/shadowDistance;
 const float PI = 3.1415927;

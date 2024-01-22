@@ -61,7 +61,7 @@ vec3 getVolumetricRays(float pixeldepth0, float pixeldepth1, vec3 color, float d
 		float depth1 = getDepth(pixeldepth1);
 		vec4 worldposition = vec4(0.0);
 		
-		vec3 watercol = water_c*water_c*sqrt(cmult)/sqrt(water_a);
+		vec3 watercol = water_c*water_c*sqrt(cmult);// /sqrt(water_a)
 		
 		for (minDist; minDist < maxDist; ) {
 			minDist = dither*sl+minDist;

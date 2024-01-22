@@ -6,7 +6,6 @@ BSL Shaders by Capt Tatsu
 https://www.bitslablab.com
 */
 
-//#define Celshade
 //#define DOF
 
 const bool colortex0MipmapEnabled = true;

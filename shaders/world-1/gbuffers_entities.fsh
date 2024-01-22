@@ -13,7 +13,7 @@ Note : gbuffers_basic, gbuffers_entities, gbuffers_hand, gbuffers_terrain, gbuff
 #define Desaturation
 #define DesaturationFactor 1.0 //[2.0 1.5 1.0 0.5 0.0]
 //#define DisableTexture
-#define EmissiveBrightness 1.00 //[0.00 0.05 0.10 0.15 0.20 0.25 0.30 0.35 0.40 0.45 0.50 0.55 0.60 0.65 0.70 0.75 0.80 0.85 0.90 0.95 1.00]
+#define EmissiveBrightness 1.00 //[0.00 0.05 0.10 0.15 0.20 0.25 0.30 0.35 0.40 0.45 0.50 0.55 0.60 0.65 0.70 0.75 0.80 0.85 0.90 0.95 1.00 1.05 1.10 1.15 1.20 1.25 1.30 1.35 1.40 1.45 1.50 1.55 1.60 1.65 1.70 1.75 1.80 1.85 1.90 1.95 2.00]
 //#define LightmapBanding
 
 //#define RPSupport
@@ -51,9 +51,6 @@ uniform mat4 shadowProjection;
 uniform mat4 shadowModelView;
 
 uniform sampler2D texture;
-#ifdef RPSupport
-uniform sampler2D specular;
-#endif
 
 float luma(vec3 color){
 	return dot(color,vec3(0.299, 0.587, 0.114));
@@ -71,12 +68,6 @@ void main(){
 	//Texture
 	vec4 albedo = texture2D(texture, texcoord) * color;
 	albedo.rgb = mix(albedo.rgb, entityColor.rgb, entityColor.a);
-
-	#ifdef RPSupport
-	float smoothness = 0.0;
-	float f0 = 0.0;
-	vec3 rawalbedo = vec3(0.0);
-	#endif
 	
 	if (albedo.a > 0.0){
 		//NDC Coordinate
@@ -88,34 +79,6 @@ void main(){
 		
 		//World Space Coordinate
 		vec3 worldpos = toWorld(fragpos);
-
-		//Specular Mapping
-		#ifdef RPSupport
-		vec4 specularmap = texture2D(specular,texcoord.xy);
-
-		#if RPSFormat == 0	//Old
-		smoothness = specularmap.r;
-		f0 = 0.02;
-		#endif
-		#if RPSFormat == 1	//PBR
-		smoothness = specularmap.r;
-		f0 = specularmap.g*specularmap.g;
-		#endif
-		#if RPSFormat == 2	//PBR + Emissive
-		smoothness = specularmap.r;
-		f0 = specularmap.g*specularmap.g;
-		#endif
-		#if RPSFormat == 3	//Continuum
-		smoothness = sqrt(specularmap.b);
-		f0 = specularmap.r*specularmap.r;
-		#endif
-		#if RPSFormat == 4	//LAB-PBR
-		smoothness = 1.0-pow(1.0-specularmap.r,2.0);
-		f0 = specularmap.g*specularmap.g;
-		#endif
-
-		rawalbedo = albedo.rgb;
-		#endif
 		
 		//Convert to linear color space
 		albedo.rgb = pow(albedo.rgb, vec3(2.2));
@@ -145,11 +108,6 @@ void main(){
 		float minlight = (0.009*screenBrightness + 0.001);
 		
 		float emissive = float(entityColor.a > 0.05);
-		#ifdef RPSupport
-		#if RPSFormat == 2
-		emissive = max(emissive,texture2D(specular,texcoord.xy).b);
-		#endif
-		#endif
 		blocklight += albedo.rgb * (emissive * 4.0 / quarterNdotU);
 		
 		vec3 finallight = scenelight + blocklight + nightVision + minlight;
@@ -165,11 +123,4 @@ void main(){
 	
 /* DRAWBUFFERS:0 */
 	gl_FragData[0] = albedo;
-	#ifdef RPSupport
-	#ifdef RPSReflection
-/* DRAWBUFFERS:036 */
-	gl_FragData[1] = vec4(smoothness,f0,0.0,1.0);
-	gl_FragData[2] = vec4(normal*0.5+0.5,1.0);
-	#endif
-	#endif
 }

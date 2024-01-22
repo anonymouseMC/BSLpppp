@@ -13,9 +13,12 @@ https://www.bitslablab.com
 
 //#define WorldTimeAnimation
 #define AnimationSpeed 1.00 //[0.25 0.50 0.75 1.00 1.25 1.50 1.75 2.00 2.50 3.00 3.50 4.00 5.00 6.00 7.00 8.00]
+#define SunBrightness 2500 //[125 250 500 1000 1500 2000 2500 3000 3500 4000 4500 5000 10000]
+#define MoonBrightness 32 //[1 2 4 8 16 32 48 64 80 96 112 128]
 
 varying vec3 upVec;
 varying vec3 sunVec;
+varying vec3 wpos;
 
 uniform int isEyeInWater;
 uniform int worldTime;
@@ -24,6 +27,7 @@ uniform float blindness;
 uniform float frameTimeCounter;
 uniform float nightVision;
 uniform float rainStrength;
+uniform float wetness;
 uniform float shadowFade;
 uniform float timeAngle;
 uniform float timeBrightness;
@@ -46,14 +50,16 @@ float frametime = frameTimeCounter*AnimationSpeed;
 #endif
 
 float eBS = eyeBrightnessSmooth.y/240.0;
-float sunVisibility = clamp(dot(sunVec,upVec)+0.05,0.0,0.1)/0.1;
-float moonVisibility = clamp(dot(-sunVec,upVec)+0.05,0.0,0.1)/0.1;
+float sunVisibility = clamp(dot(sunVec,upVec)+0.05,0.0,0.3)/0.3;
+float moonVisibility = clamp(dot(-sunVec,upVec)+0.05,0.0,0.3)/0.3;
 
 float luma(vec3 color){
 	return dot(color,vec3(0.299, 0.587, 0.114));
 }
 
 #include "lib/color/lightColor.glsl"
+#include "lib/color/lightColorDynamic.glsl"
+#include "lib/color/waterColor.glsl"
 #include "lib/color/skyColor.glsl"
 #include "lib/common/clouds.glsl"
 #include "lib/common/dither.glsl"
@@ -61,20 +67,27 @@ float luma(vec3 color){
 
 void main(){
 	//NDC Coordinate
-	vec4 fragpos = gbufferProjectionInverse*(vec4(gl_FragCoord.xy/vec2(viewWidth,viewHeight),gl_FragCoord.z,1.0)*2.0-1.0);
+	vec4 fragpos = gbufferProjectionInverse*(vec4(gl_FragCoord.xy/vec2(viewWidth,viewHeight),gl_FragCoord.z,1.0) * 2.0 - 1.0);
 	fragpos /= fragpos.w;
 	
 	//Render Sky
-	vec3 albedo = getSkyColor(fragpos.xyz,light);
+    float cosSn = dot(normalize(fragpos.xyz),sunVec);
+	vec3 albedo = getSkyColor(fragpos.xyz,light,ambient) * (1.0 + 2.0 * pow(max(0.0, cosSn), 5));
 	
 	//Round Sun & Moon
 	#ifdef RoundSunMoon
-	float cosSn = dot(normalize(fragpos.xyz),sunVec);
 	float isMoon = float(cosSn < 0.0);
-	float sun = pow(abs(cosSn),800.0*isMoon+800.0) * (1.0-sqrt(rainStrength));
+	float sun = clamp(pow(abs(cosSn),800.0*isMoon+ (1.0 - wetness) * 1000.0 + 3000.0),0.0,1.0);
+    //float sun = clamp( 1.0 / abs(cosSn));
 	vec3 light_me = mix(light_m,light_a,mefade);
-	vec3 suncol = mix(sqrt(light_n)*moonVisibility,mix(light_me,sqrt(light_d*light_me),timeBrightness)*sunVisibility,float(cosSn > 0.0));
-	albedo += (sun * 32.0) * suncol;
+	vec3 suncol = mix(light_me,sqrt(light_d*light_me),timeBrightness);
+    suncol = mix(sqrt(light_n)*moonVisibility,suncol*sunVisibility,float(cosSn > 0.0));
+    suncol = mix(suncol, light, rainStrength);
+    if (isEyeInWater < 1.02 && isEyeInWater > 0.98) {
+        suncol *= Water;
+    }
+    float sb = SunBrightness * (1.0 - (0.9995) * pow(wetness,0.5));
+	albedo += (sun * (sb - (sb - MoonBrightness) * isMoon)) * suncol;
 	#endif
 	
 	albedo *= 1.0+nightVision;

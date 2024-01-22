@@ -53,14 +53,6 @@ uniform sampler2D colortex0;
 uniform sampler2D depthtex0;
 uniform sampler2D noisetex;
 
-#ifdef RPSupport
-#ifdef RPSReflection
-uniform sampler2D colortex3;
-uniform sampler2D colortex6;
-uniform sampler2D colortex7;
-#endif
-#endif
-
 #ifdef WorldTimeAnimation
 float frametime = float(worldTime)/20.0*AnimationSpeed;
 #else
@@ -185,7 +177,7 @@ void main(){
 		float smoothness = texture2D(colortex3,texcoord.xy).r;
 		smoothness = smoothness*sqrt(smoothness);
 		float f0 = texture2D(colortex3,texcoord.xy).g;
-		vec3 normal = texture2D(colortex6,texcoord.xy).xyz*2.0-1.0;
+		vec3 normal = texture2D(gaux3,texcoord.xy).xyz*2.0-1.0;
 		
 		float fresnel = clamp(1.0 + dot(normal, normalize(fragpos.xyz)),0.0,1.0);
 		fresnel = pow(fresnel, 5.0);

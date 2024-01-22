@@ -8,6 +8,7 @@ https://www.bitslablab.com
 #define Clouds
 #define SkyboxBrightness 2.00 //[0.25 0.50 0.75 1.00 1.25 1.50 1.75 2.00 2.25 2.50 2.75 3.00 3.25 3.50 3.75 4.00]
 #define SkyDesaturation
+//#define RoundSunMoon
 
 varying vec2 texcoord;
 
@@ -21,6 +22,7 @@ uniform int worldTime;
 
 uniform float nightVision;
 uniform float rainStrength;
+uniform float wetness;
 uniform float timeAngle;
 uniform float timeBrightness;
 uniform float viewWidth;
@@ -38,9 +40,11 @@ float sunVisibility = clamp(dot(sunVec,upVec)+0.05,0.0,0.1)/0.1;
 float moonVisibility = clamp(dot(-sunVec,upVec)+0.05,0.0,0.1)/0.1;
 
 #include "lib/color/lightColor.glsl"
+#include "lib/color/lightColorDynamic.glsl"
 
 void main(){
 	//Texture
+    #ifndef RoundSunMoon
 	vec4 albedo = texture2D(texture, texcoord.xy) * color;
 
 	//Convert to linear color space
@@ -59,4 +63,5 @@ void main(){
 	
 /* DRAWBUFFERS:0 */
 	gl_FragData[0] = albedo;
+    #endif
 }

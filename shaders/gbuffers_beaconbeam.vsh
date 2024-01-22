@@ -9,11 +9,15 @@ https://www.bitslablab.com
 //#define WorldCurvature
 
 varying vec2 texcoord;
+varying vec3 sunVec;
+varying vec3 upVec;
 varying vec4 color;
+
+uniform vec3 upPosition;
+uniform vec3 sunPosition;
 
 #if AA == 2
 uniform int frameCounter;
-
 uniform float viewWidth;
 uniform float viewHeight;
 #include "lib/common/jitter.glsl"
@@ -40,5 +44,10 @@ void main(){
 	gl_Position.xy = taaJitter(gl_Position.xy,gl_Position.w);
 	#endif
 
+    
+    upVec = normalize(upPosition.xyz).xyz;
+    sunVec = normalize(sunPosition.xyz).xyz;
+    // upVec = vec3(0.0);
+    // sunVec = vec3(0.0);
 	color = gl_Color;
 }

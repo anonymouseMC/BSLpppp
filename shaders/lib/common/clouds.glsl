@@ -4,7 +4,7 @@
 #define CloudHeight 15.0 //[5.0 10.0 15.0 20.0 25.0]
 #define CloudOpacity 1.0 //[0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0]
 #define CloudSpeed 1.00 //[0.25 0.50 0.75 1.00 1.25 1.50 1.75 2.00 2.50 3.00 3.50 4.00]
-#define CloudBrightness 1.00 //[0.25 0.50 0.75 1.00 1.25 1.50 1.75 2.00 2.25 2.50 2.75 3.00 3.25 3.50 3.75 4.00]
+#define CloudBrightness 1.00 //[0.25 0.50 1.00 1.50 2.00 2.50 3.00 3.50 4.00 4.50 5.00 5.50 6.00 6.50 7.00 7.50 8.00 8.50 9.00 9.50 10.00]
 
 float cloudNoise(vec2 coord, vec2 wind){
 	float noise = texture2D(noisetex,coord*0.5+wind*0.55).x;
@@ -35,7 +35,7 @@ vec4 drawCloud(vec3 fragpos, float dither, vec3 color, vec3 light, vec3 ambient)
 	vec3 cloudcolor = vec3(0.0);
 	float cloudgradient = 0.0;
 	float colmix = dither/CloudQuality;
-	float colmult = CloudBrightness*(0.5-0.25*(1.0-sunVisibility)*(1.0-rainStrength));
+	float colmult = CloudBrightness*(0.5-0.25*(1.0-sunVisibility));
 		  colmult*= 0.45/SkyBrightness;
 	float scattering = pow(cosS*0.5*(2.0*sunVisibility-1.0)+0.5,6.0);
 

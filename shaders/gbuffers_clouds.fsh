@@ -17,6 +17,7 @@ uniform int isEyeInWater;
 uniform int worldTime;
 
 uniform float rainStrength;
+uniform float wetness;
 uniform float timeAngle;
 uniform float timeBrightness;
 
@@ -29,6 +30,7 @@ float sunVisibility = clamp(dot(sunVec,upVec)+0.05,0.0,0.1)/0.1;
 float moonVisibility = clamp(dot(-sunVec,upVec)+0.05,0.0,0.1)/0.1;
 
 #include "lib/color/lightColor.glsl"
+#include "lib/color/lightColorDynamic.glsl"
 
 void main(){
 	//Texture

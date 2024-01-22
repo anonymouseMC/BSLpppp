@@ -6,7 +6,6 @@ BSL Shaders by Capt Tatsu
 https://www.bitslablab.com
 */
 
-//#define Celshade
 //#define MotionBlur
 
 varying vec2 texcoord;
@@ -35,15 +34,6 @@ void main(){
 	
 	//Material Flag
 	float hand = float(texture2D(depthtex1,texcoord.xy).r < 0.56);
-
-	#ifdef Celshade
-	const vec2 celshadeoffset[24] = vec2[24](vec2(-2.0,2.0),vec2(-1.0,2.0),vec2(0.0,2.0),vec2(1.0,2.0),vec2(2.0,2.0),vec2(-2.0,1.0),vec2(-1.0,1.0),vec2(0.0,1.0),vec2(1.0,1.0),vec2(2.0,1.0),vec2(-2.0,0.0),vec2(-1.0,0.0),vec2(1.0,0.0),vec2(2.0,0.0),vec2(-2.0,-1.0),vec2(-1.0,-1.0),vec2(0.0,-1.0),vec2(1.0,-1.0),vec2(2.0,-1.0),vec2(-2.0,-2.0),vec2(-1.0,-2.0),vec2(0.0,-2.0),vec2(1.0,-2.0),vec2(2.0,-2.0));
-	float cph = 1.0/1080.0;
-	float cpw = cph/aspectRatio;
-	for (int i = 0; i < 24; i++){
-		hand = max(hand,float(texture2D(depthtex1,texcoord.xy+vec2(cpw,cph)*celshadeoffset[i]).r < 0.56));
-	}
-	#endif
 	
 	//Motion Blur
 	#ifdef MotionBlur

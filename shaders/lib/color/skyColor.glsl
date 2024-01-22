@@ -14,6 +14,6 @@ uniform vec3 fogColor;
 vec3 sky_c = pow(skyColor,vec3(2.2))*SkyCS;
 vec3 fog_c = pow(fogColor,vec3(2.2))*SkyCS;
 #else
-vec3 sky_c = SkyC*SkyC*SkyCS;
-vec3 fog_c = sky_c;
+#define sky_c SkyC*SkyC*SkyCS
+#define fog_c sky_c
 #endif

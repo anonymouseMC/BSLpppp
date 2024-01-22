@@ -20,7 +20,7 @@ https://www.bitslablab.com
 //#define WorldTimeAnimation
 #define AnimationSpeed 1.00 //[0.25 0.50 0.75 1.00 1.25 1.50 1.75 2.00 2.50 3.00 3.50 4.00 5.00 6.00 7.00 8.00]
 
-const float shadowDistance = 256.0; //[128.0 256.0 512.0 1024.0]
+const float shadowDistance = 256.0; //[128.0 144.0 160.0 176.0 192.0 208.0 224.0 240.0 256.0 512.0 1024.0]
 const int shadowMapResolution = 2048; //[1024 2048 3072 4096 8192]
 
 const float shadowMapBias = 1.0-25.6/shadowDistance;
@@ -94,10 +94,12 @@ float calcLavaMove(in vec3 pos)
 #include "lib/common/worldCurvature.glsl"
 #endif
 
+#include "lib/common/materialDef.glsl"
+
 void main(){
 	
 	gl_Position = ftransform();
-	mat = 0.0;
+	mat = block_mat;
 	float istopv = 0.0;
 	if (gl_MultiTexCoord0.t < mc_midTexCoord.t) istopv = 1.0;
 	vec4 position = gl_Position;
@@ -148,9 +150,9 @@ void main(){
 	
 	position.xyz -= cameraPosition.xyz;
 	
-	if (mc_Entity.x == 79.0) mat = 1.0;
-	if (mc_Entity.x == 8.0) mat = 2.0;
-	if (mc_Entity.x == 51.0) mat = 3.0;
+	if (mc_Entity.x == 79.0) mat = trans_mat;
+	if (mc_Entity.x == 8.0) mat = water_mat;
+	if (mc_Entity.x == 51.0) mat = fire_mat;
 
 	#ifdef WorldCurvature
 	position.y -= worldCurvature(position.xz);

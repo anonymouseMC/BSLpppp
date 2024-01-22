@@ -38,14 +38,14 @@ float GetNoHSquared(float radiusTan, float NoL, float NoV, float VoL)
 }
 
 float GGX (vec3 n, vec3 v, vec3 l, float r, float F0) {
-    if(r < 0.02) r = 0.02;
+    r = max(0.02, r);
     r*=r;r*=r;
     
     vec3 h = normalize(l - v);
 
     float dotLH = clamp(dot(h, l), 0.0, 1.0);
     float dotNL = clamp(dot(n, l), 0.0, 1.0);
-    float dotNH = GetNoHSquared(0.025 * sunVisibility + 0.05, dotNL, dot(n, -v), dot(-v, l));
+    float dotNH = GetNoHSquared(0.025 * sunVisibility + 0.025, dotNL, dot(n, -v), dot(-v, l));
     
     float denom = dotNH * r - dotNH + 1.0;
     float D = r / (3.141592653589793 * denom * denom);

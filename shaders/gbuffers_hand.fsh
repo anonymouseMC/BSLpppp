@@ -14,9 +14,8 @@ Note : gbuffers_basic, gbuffers_entities, gbuffers_hand, gbuffers_terrain, gbuff
 #define Desaturation
 #define DesaturationFactor 1.0 //[2.0 1.5 1.0 0.5 0.0]
 //#define DisableTexture
-#define EmissiveBrightness 1.00 //[0.00 0.05 0.10 0.15 0.20 0.25 0.30 0.35 0.40 0.45 0.50 0.55 0.60 0.65 0.70 0.75 0.80 0.85 0.90 0.95 1.00]
+#define EmissiveBrightness 1.00 //[0.00 0.05 0.10 0.15 0.20 0.25 0.30 0.35 0.40 0.45 0.50 0.55 0.60 0.65 0.70 0.75 0.80 0.85 0.90 0.95 1.00 1.05 1.10 1.15 1.20 1.25 1.30 1.35 1.40 1.45 1.50 1.55 1.60 1.65 1.70 1.75 1.80 1.85 1.90 1.95 2.00]
 #define EmissiveRecolor
-//#define LightmapBanding
 
 #define POMQuality 32 //[4 8 16 32 64 128 256 512]
 #define POMDepth 1.00 //[0.25 0.50 0.75 1.00 1.25 1.50 1.75 2.00 2.25 2.50 2.75 3.00 3.25 3.50 3.75 4.00]
@@ -31,7 +30,7 @@ Note : gbuffers_basic, gbuffers_entities, gbuffers_hand, gbuffers_terrain, gbuff
 #define ShadowFilter
 
 const int shadowMapResolution = 2048; //[1024 2048 3072 4096 8192]
-const float shadowDistance = 256.0; //[128.0 256.0 512.0 1024.0]
+const float shadowDistance = 256.0; //[128.0 144.0 160.0 176.0 192.0 208.0 224.0 240.0 256.0 512.0 1024.0]
 const float shadowMapBias = 1.0-25.6/shadowDistance;
 
 varying float isMainHand;
@@ -45,15 +44,6 @@ varying vec3 sunVec;
 
 varying vec4 color;
 
-#ifdef RPSupport
-varying float dist;
-varying vec3 binormal;
-varying vec3 tangent;
-varying vec3 viewVector;
-varying vec4 vtexcoordam;
-varying vec4 vtexcoord;
-#endif
-
 uniform int frameCounter;
 uniform int heldItemId;
 uniform int heldItemId2;
@@ -63,6 +53,7 @@ uniform int worldTime;
 uniform float frameTimeCounter;
 uniform float nightVision;
 uniform float rainStrength;
+uniform float wetness;
 uniform float screenBrightness; 
 uniform float shadowFade;
 uniform float timeAngle;
@@ -78,11 +69,6 @@ uniform mat4 shadowProjection;
 uniform mat4 shadowModelView;
 
 uniform sampler2D texture;
-
-#ifdef RPSupport
-uniform sampler2D specular;
-uniform sampler2D normals;
-#endif
 
 uniform sampler2DShadow shadowtex0;
 #ifdef ShadowColor
@@ -104,27 +90,12 @@ float gradNoise(){
 	return fract(52.9829189*fract(0.06711056*gl_FragCoord.x + 0.00583715*gl_FragCoord.y)+frameCounter/8.0);
 }
 
-#ifdef RPSupport
-vec2 dcdx = dFdx(texcoord.xy);
-vec2 dcdy = dFdy(texcoord.xy);
-
-vec4 readTexture(vec2 coord){
-	return texture2DGradARB(texture,fract(coord)*vtexcoordam.pq+vtexcoordam.st,dcdx,dcdy);
-}
-vec4 readNormal(vec2 coord){
-	return texture2DGradARB(normals,fract(coord)*vtexcoordam.pq+vtexcoordam.st,dcdx,dcdy);
-}
-
-float mincoord = 1.0/4096.0;
-#endif
-
+#include "lib/color/waterColor.glsl"
 #include "lib/color/lightColor.glsl"
+#include "lib/color/lightColorDynamic.glsl"
 #include "lib/color/torchColor.glsl"
 #include "lib/common/spaceConversion.glsl"
-
-#ifdef RPSupport
-#include "lib/common/ggx.glsl"
-#endif
+#include "lib/common/materialDef.glsl"
 
 #if AA == 2
 #include "lib/common/jitter.glsl"
@@ -134,36 +105,6 @@ void main(){
 	//Texture
 	vec4 albedo = texture2D(texture, texcoord) * color;
 	vec3 newnormal = normal;
-	
-	#ifdef RPSupport
-	vec2 newcoord = vtexcoord.st*vtexcoordam.pq+vtexcoordam.st;
-	vec2 coord = vtexcoord.st;
-	
-	#ifdef RPSPOM
-	vec3 normalmap = readNormal(vtexcoord.st).xyz*2.0-1.0;
-	float normalcheck = normalmap.x + normalmap.y + normalmap.z;
-	if (viewVector.z < 0.0 && readNormal(vtexcoord.st).a < (1.0-1.0/POMQuality) && normalcheck > -2.999){		vec2 interval = viewVector.xy * 0.05 * POMDepth / (-viewVector.z * POMQuality);
-		for (int i = 0; i < POMQuality; i++) {
-			if (readNormal(coord).a < 1.0-float(i)/POMQuality) coord = coord+interval;
-			else break;
-		}
-		if (coord.t < mincoord) {
-			if (readTexture(vec2(coord.s,mincoord)).a == 0.0) {
-				coord.t = mincoord;
-				discard;
-			}
-		}
-		newcoord = fract(coord.st)*vtexcoordam.pq+vtexcoordam.st;
-		albedo = texture2DGradARB(texture, newcoord,dcdx,dcdy) * color;
-	}
-	#endif
-	
-	float smoothness = 0.0;
-	float f0 = 0.0;
-	float skymapmod = 0.0;
-	vec3 rawalbedo = vec3(0.0);
-	vec3 spec = vec3(0.0);
-	#endif
 	
 	if (albedo.a > 0.0){
 		//NDC Coordinate
@@ -188,46 +129,6 @@ void main(){
 		if (doRecolor > 0.5) albedo.rgb *= 0.5 * luma(albedo.rgb) + 0.25;
 		#endif
 		
-		//Normal Mapping
-		#ifdef RPSupport
-		vec3 normalmap = texture2DGradARB(normals,newcoord.xy,dcdx,dcdy).xyz*2.0-1.0;
-		mat3 tbnMatrix = mat3(tangent.x, binormal.x, normal.x,
-							tangent.y, binormal.y, normal.y,
-							tangent.z, binormal.z, normal.z);
-		
-		newnormal = normalize(normalmap * tbnMatrix);
-		#endif
-		
-		//Specular Mapping
-		#ifdef RPSupport
-		vec4 specularmap = texture2DGradARB(specular,newcoord.xy,dcdx,dcdy);
-
-		#if RPSFormat == 0	//Old
-		smoothness = specularmap.r;
-		f0 = float((heldItemId == 41.0 || heldItemId == 42.0 || heldItemId == 71.0 || heldItemId == 145.0) && isMainHand > 0.5);
-		f0 += float((heldItemId2 == 41.0 || heldItemId2 == 42.0 || heldItemId2 == 71.0 || heldItemId2 == 145.0) && isMainHand < 0.5);
-		f0 = f0*0.781+0.02;
-		#endif
-		#if RPSFormat == 1	//PBR
-		smoothness = specularmap.r;
-		f0 = specularmap.g*specularmap.g;
-		#endif
-		#if RPSFormat == 2	//PBR + Emissive
-		smoothness = specularmap.r;
-		f0 = specularmap.g*specularmap.g;
-		#endif
-		#if RPSFormat == 3	//Continuum
-		smoothness = sqrt(specularmap.b);
-		f0 = specularmap.r*specularmap.r;
-		#endif
-		#if RPSFormat == 4	//LAB-PBR
-		smoothness = 1.0-pow(1.0-specularmap.r,2.0);
-		f0 = specularmap.g*specularmap.g;
-		#endif
-
-		rawalbedo = albedo.rgb;
-		#endif
-		
 		//Convert to linear color space
 		albedo.rgb = pow(albedo.rgb, vec3(2.2));
 		
@@ -236,13 +137,8 @@ void main(){
 		#endif
 		
 		//Lightmap
-		#ifdef LightmapBanding
-		float torchmap = clamp(floor(lmcoord.x*14.999) / 14, 0.0, 1.0);
-		float skymap = clamp(floor(lmcoord.y*14.999) / 14, 0.0, 1.0);
-		#else
 		float torchmap = clamp(lmcoord.x, 0.0, 1.0);
 		float skymap = clamp(lmcoord.y, 0.0, 1.0);
-		#endif
 		
 		torchmap = max(torchmap,float(heldItemId == 213));
 		
@@ -324,30 +220,6 @@ void main(){
 			}
 		}
 		
-		//RPS Parallax Shadows
-		#ifdef RPSupport
-		#ifdef RPSShadow
-		if (skymap > 0.0 && NdotL > 0.0){
-			float height = texture2DGradARB(normals,newcoord.xy,dcdx,dcdy).a;
-			float parallaxshadow = 1.0;
-			if (height < (1.0-1.0/POMQuality)){
-				vec3 parallaxdir = (tbnMatrix * lightVec);
-				parallaxdir.xy *= 0.1 * POMShadowAngle * POMDepth;
-				float step = 1.28/POMQuality;
-				
-				for(int i = 0; i < POMQuality/4; i++){
-					float currz = height + parallaxdir.z * step * i;
-					float offsetheight = texture2DGradARB(normals,fract(coord.st+parallaxdir.xy*i*step)*vtexcoordam.pq+vtexcoordam.st,dcdx,dcdy).a;
-					parallaxshadow *= clamp(1.0-(offsetheight-currz)*40.0,0.0,1.0);
-					if (parallaxshadow < 0.01) break;
-				}
-				
-				NdotL *= parallaxshadow;
-			}
-		}
-		#endif
-		#endif
-		
 		vec3 fullshading = max(vec3(shadow), shadowcol) * NdotL;
 		float lightmult = (4.0-3.0*eBS);
 		
@@ -359,11 +231,6 @@ void main(){
 		float minlight = (0.009*screenBrightness + 0.001)*(1.0-eBS);
 		
 		float emissive = 0.0;
-		#ifdef RPSupport
-		#if RPSFormat == 2
-		emissive = texture2DGradARB(specular,newcoord.xy,dcdx,dcdy).b;
-		#endif
-		#endif
 		vec3 emissivelight = albedo.rgb * luma(albedo.rgb) * (emissive * 4.0 / quarterNdotU);
 		
 		vec3 finallight = scenelight + blocklight + emissivelight + nightVision + minlight;
@@ -375,31 +242,14 @@ void main(){
 		vec3 desat_c = mix(vec3(0.1),mix(weather*0.5, light_n/(LightNS*LightNS), (1.0 - sunVisibility)*(1.0 - rainStrength)),sqrt(skymap))*(1.0-desat);
 		albedo.rgb = mix(luma(albedo.rgb)*desat_c*10.0,albedo.rgb,desat);
 		#endif
-		
-		//RPSupport Reflection
-		#ifdef RPSupport
-		skymapmod = skymap*skymap*(3.0-2.0*skymap);
-
-		if (dot(fullshading,fullshading) > 0.0){
-			vec3 metalcol = mix(vec3(1.0), pow(rawalbedo, vec3(2.2)),float(f0 >= 0.8));
-			vec3 light_me = mix(light_m,light_a,mefade);
-				vec3 speccol = mix(sqrt(light_n),mix(light_me,sqrt(light_d*light_me),timeBrightness),sunVisibility);
-			
-			spec = pow(speccol,vec3(1.0-0.5*f0)) * max(vec3(shadow), shadowcol) * shadowFade * skymap * metalcol * (1.0-0.95*rainStrength);
-			spec *= GGX(newnormal,normalize(fragpos.xyz),lightVec,1.0-smoothness,f0);
-			albedo.rgb += spec;
-		}
-		#endif
+        albedo.a = mix(albedo.a, 1.0, 0.6);
+        if (isEyeInWater == 1.0) {
+            albedo.rgb = mix(Water * albedo.rgb, albedo.rgb, min(0.8,eBS * 0.1));
+        }
 	}
 	
-/* DRAWBUFFERS:0 */
-	gl_FragData[0] = albedo;
-	#ifdef RPSupport
-	#ifdef RPSReflection
-/* DRAWBUFFERS:0367 */
-	gl_FragData[1] = vec4(smoothness,f0,skymapmod,1.0);
-	gl_FragData[2] = vec4(newnormal*0.5+0.5,1.0);
-	gl_FragData[3] = vec4(spec/(4.0+spec),1.0);
-	#endif
-	#endif
+/* DRAWBUFFERS:023 */
+    gl_FragData[0] = albedo;
+    gl_FragData[1] = vec4(0.0, 0.0, trans_mat, 0.5);
+    gl_FragData[2] = vec4(albedo.rgb,albedo.a);
 }

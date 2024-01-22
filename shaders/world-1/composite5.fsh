@@ -16,7 +16,7 @@ https://www.bitslablab.com
 #ifdef AutoExposure
 const bool colortex0MipmapEnabled = true;
 #endif
-const bool colortex2Clear = false;
+const bool colortex6Clear = false;
 
 varying vec2 texcoord;
 
@@ -33,7 +33,7 @@ uniform ivec2 eyeBrightnessSmooth;
 
 uniform sampler2D colortex0;
 uniform sampler2D colortex1;
-uniform sampler2D colortex2;
+uniform sampler2D gaux3;
 uniform sampler2D noisetex;
 uniform sampler2D depthtex1;
 
@@ -76,12 +76,12 @@ void main(){
 	
 	//Temporal Stuffs
 	#ifdef AutoExposure
-	float tempexposure = texture2D(colortex2,vec2(pw,ph)).r;
+	float tempexposure = texture2D(gaux3,vec2(pw,ph)).r;
 	#endif
 	vec3 tempcolor = vec3(0.0);
 	
 	#if AA == 2
-	tempcolor = texture2D(colortex2,texcoord.xy).gba;
+	tempcolor = texture2D(gaux3,texcoord.xy).gba;
 	#endif
 	
 	//Bloom
@@ -117,7 +117,7 @@ void main(){
 	//Film Grain
 	color += (texture2D(noisetex,texcoord.xy*vec2(viewWidth,viewHeight)/512.0).rgb-0.25)/128.0;
 	
-/*DRAWBUFFERS:12*/
+/*DRAWBUFFERS:16*/
 	gl_FragData[0] = vec4(color,1.0);
 	gl_FragData[1] = vec4(temporal,tempcolor);
 }

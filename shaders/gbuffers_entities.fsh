@@ -13,8 +13,7 @@ Note : gbuffers_basic, gbuffers_entities, gbuffers_hand, gbuffers_terrain, gbuff
 #define Desaturation
 #define DesaturationFactor 1.0 //[2.0 1.5 1.0 0.5 0.0]
 //#define DisableTexture
-#define EmissiveBrightness 1.00 //[0.00 0.05 0.10 0.15 0.20 0.25 0.30 0.35 0.40 0.45 0.50 0.55 0.60 0.65 0.70 0.75 0.80 0.85 0.90 0.95 1.00]
-//#define LightmapBanding
+#define EmissiveBrightness 1.00 //[0.00 0.05 0.10 0.15 0.20 0.25 0.30 0.35 0.40 0.45 0.50 0.55 0.60 0.65 0.70 0.75 0.80 0.85 0.90 0.95 1.00 1.05 1.10 1.15 1.20 1.25 1.30 1.35 1.40 1.45 1.50 1.55 1.60 1.65 1.70 1.75 1.80 1.85 1.90 1.95 2.00]
 //#define RPSupport
 #define RPSFormat 0 //[0 1 2 3]
 #define RPSReflection
@@ -23,7 +22,7 @@ Note : gbuffers_basic, gbuffers_entities, gbuffers_hand, gbuffers_terrain, gbuff
 #define ShadowFilter
 
 const int shadowMapResolution = 2048; //[1024 2048 3072 4096 8192]
-const float shadowDistance = 256.0; //[128.0 256.0 512.0 1024.0]
+const float shadowDistance = 256.0; //[128.0 144.0 160.0 176.0 192.0 208.0 224.0 240.0 256.0 512.0 1024.0]
 const float shadowMapBias = 1.0-25.6/shadowDistance;
 
 varying float mat;
@@ -44,6 +43,7 @@ uniform int worldTime;
 uniform float frameTimeCounter;
 uniform float nightVision;
 uniform float rainStrength;
+uniform float wetness;
 uniform float screenBrightness; 
 uniform float shadowFade;
 uniform float timeAngle;
@@ -61,9 +61,6 @@ uniform mat4 shadowProjection;
 uniform mat4 shadowModelView;
 
 uniform sampler2D texture;
-#ifdef RPSupport
-uniform sampler2D specular;
-#endif
 
 uniform sampler2DShadow shadowtex0;
 #ifdef ShadowColor
@@ -86,12 +83,9 @@ float gradNoise(){
 }
 
 #include "lib/color/lightColor.glsl"
+#include "lib/color/lightColorDynamic.glsl"
 #include "lib/color/torchColor.glsl"
 #include "lib/common/spaceConversion.glsl"
-
-#ifdef RPSupport
-#include "lib/common/ggx.glsl"
-#endif
 
 #if AA == 2
 #include "lib/common/jitter.glsl"
@@ -101,14 +95,6 @@ void main(){
 	//Texture
 	vec4 albedo = texture2D(texture, texcoord) * color;
 	albedo.rgb = mix(albedo.rgb, entityColor.rgb, entityColor.a);
-
-	#ifdef RPSupport
-	float smoothness = 0.0;
-	float f0 = 0.0;
-	float skymapmod = 0.0;
-	vec3 rawalbedo = vec3(0.0);
-	vec3 spec = vec3(0.0);
-	#endif
 	
 	if (albedo.a > 0.0){
 		//NDC Coordinate
@@ -121,34 +107,6 @@ void main(){
 		//World Space Coordinate
 		vec3 worldpos = toWorld(fragpos);
 		
-		//Specular Mapping
-		#ifdef RPSupport
-		vec4 specularmap = texture2D(specular,texcoord.xy);
-
-		#if RPSFormat == 0	//Old
-		smoothness = specularmap.r;
-		f0 = 0.02;
-		#endif
-		#if RPSFormat == 1	//PBR
-		smoothness = specularmap.r;
-		f0 = specularmap.g*specularmap.g;
-		#endif
-		#if RPSFormat == 2	//PBR + Emissive
-		smoothness = specularmap.r;
-		f0 = specularmap.g*specularmap.g;
-		#endif
-		#if RPSFormat == 3	//Continuum
-		smoothness = sqrt(specularmap.b);
-		f0 = specularmap.r*specularmap.r;
-		#endif
-		#if RPSFormat == 4	//LAB-PBR
-		smoothness = 1.0-pow(1.0-specularmap.r,2.0);
-		f0 = specularmap.g*specularmap.g;
-		#endif
-
-		rawalbedo = albedo.rgb;
-		#endif
-		
 		//Convert to linear color space
 		albedo.rgb = pow(albedo.rgb, vec3(2.2));
 		
@@ -157,13 +115,8 @@ void main(){
 		#endif
 		
 		//Lightmap
-		#ifdef LightmapBanding
-		float torchmap = clamp(floor(lmcoord.x*14.999) / 14, 0.0, 1.0);
-		float skymap = clamp(floor(lmcoord.y*14.999) / 14, 0.0, 1.0);
-		#else
 		float torchmap = clamp(lmcoord.x, 0.0, 1.0);
 		float skymap = clamp(lmcoord.y, 0.0, 1.0);
-		#endif
 		
 		//Shadows
 		float shadow = 0.0;
@@ -254,11 +207,6 @@ void main(){
 		float minlight = (0.009*screenBrightness + 0.001)*(1.0-eBS);
 		
 		float emissive = float(entityColor.a > 0.05);
-		#ifdef RPSupport
-		#if RPSFormat == 2
-		emissive = max(emissive,texture2D(specular,texcoord.xy).b);
-		#endif
-		#endif
 		blocklight += albedo.rgb * (emissive * 4.0 / quarterNdotU);
 		
 		vec3 finallight = scenelight + blocklight + nightVision + minlight;
@@ -270,31 +218,8 @@ void main(){
 		vec3 desat_c = mix(vec3(0.1),mix(weather*0.5, light_n/(LightNS*LightNS), (1.0 - sunVisibility)*(1.0 - rainStrength)),sqrt(skymap))*(1.0-desat);
 		albedo.rgb = mix(luma(albedo.rgb)*desat_c*10.0,albedo.rgb,desat);
 		#endif
-		
-		//RPSupport Reflection
-		#ifdef RPSupport
-		skymapmod = skymap*skymap*(3.0-2.0*skymap);
-		
-		if (dot(fullshading,fullshading) > 0.0){
-			vec3 metalcol = mix(vec3(1.0), pow(rawalbedo, vec3(2.2)),float(f0 >= 0.8));
-			vec3 light_me = mix(light_m,light_a,mefade);
-				vec3 speccol = mix(sqrt(light_n),mix(light_me,sqrt(light_d*light_me),timeBrightness),sunVisibility);
-			
-			spec = pow(speccol,vec3(1.0-0.5*f0)) * max(vec3(shadow), shadowcol) * clamp(NdotL*100.0,0.0,1.0) * shadowFade * skymap * metalcol * (1.0-0.95*rainStrength);
-			spec *= GGX(normal,normalize(fragpos.xyz),lightVec,1.0-0.98*smoothness,f0*0.781+0.02);
-			albedo.rgb += spec;
-		}
-		#endif
 	}
 	
 /* DRAWBUFFERS:0 */
 	gl_FragData[0] = albedo;
-	#ifdef RPSupport
-	#ifdef RPSReflection
-/* DRAWBUFFERS:0367 */
-	gl_FragData[1] = vec4(smoothness,f0,skymapmod,1.0);
-	gl_FragData[2] = vec4(normal*0.5+0.5,1.0);
-	gl_FragData[3] = vec4(spec/(4.0+spec),1.0);
-	#endif
-	#endif
 }

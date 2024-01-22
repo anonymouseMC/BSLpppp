@@ -9,6 +9,7 @@ const float sunPathRotation = -40.0; //[-60.0 -55.0 -50.0 -45.0 -40.0 -35.0 -30.
 
 varying vec3 upVec;
 varying vec3 sunVec;
+varying vec3 wpos;
 
 uniform float timeAngle;
 
@@ -17,6 +18,7 @@ uniform vec3 upPosition;
 uniform vec3 sunPosition;
 
 uniform mat4 gbufferModelView;
+uniform mat4 gbufferModelViewInverse;
 
 void main(){
 	gl_Position = ftransform();
@@ -31,5 +33,9 @@ void main(){
 	sunVec = normalize((gbufferModelView * vec4(vec3(-sin(ang), cos(ang) * sunRotationData) * 2000.0, 1.0)).xyz);
 	
 	//upVec = normalize(gbufferModelView[1].xyz);
-	//sunVec = normalize(sunPosition);
+	//timeVec = normalize(sunPosition);
+
+    vec4 position = gbufferModelViewInverse * gl_ModelViewMatrix * gl_Vertex;
+	vec3 worldpos = position.xyz + cameraPosition;
+	wpos = worldpos;
 }

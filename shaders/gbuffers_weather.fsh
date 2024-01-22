@@ -21,6 +21,7 @@ uniform int worldTime;
 
 uniform float nightVision;
 uniform float rainStrength;
+uniform float wetness;
 uniform float timeAngle;
 uniform float timeBrightness;
 uniform float viewWidth;
@@ -44,6 +45,7 @@ vec3 toNDC(vec3 pos){
 }
 
 #include "lib/color/lightColor.glsl"
+#include "lib/color/lightColorDynamic.glsl"
 #include "lib/color/torchColor.glsl"
 
 void main(){
@@ -55,7 +57,7 @@ void main(){
 	
 	if (albedo.a > 0.001){
 		albedo.rgb = texture2D(texture, texcoord.xy).rgb;
-		albedo.a *= 0.1 * rainStrength * length(albedo.rgb/3)*float(albedo.a > 0.1);
+		albedo.a *= rainStrength * length(albedo.rgb/3);
 		albedo.rgb = sqrt(albedo.rgb);
 		albedo.rgb *= (ambient + lmcoord.x * lmcoord.x * torch_c) * WeatherOpacity;
 		
@@ -73,6 +75,7 @@ void main(){
 	}
 	#endif
 	
-/* DRAWBUFFERS:0 */
-	gl_FragData[0] = albedo;
+/* DRAWBUFFERS:3 */
+    gl_FragData[0] = albedo;
+    //gl_FragData[1] = albedo;
 }

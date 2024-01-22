@@ -61,19 +61,10 @@ const vec2 hqoffset[60] = vec2[60]  (  vec2( 0.0000, 0.2500 ),
 									vec2( 0.5000, 0.8660 ),
 									vec2( 0.2588, 0.9659 ));
 
-const vec2 celshadeoffset[24] = vec2[24](vec2(-2.0,2.0),vec2(-1.0,2.0),vec2(0.0,2.0),vec2(1.0,2.0),vec2(2.0,2.0),vec2(-2.0,1.0),vec2(-1.0,1.0),vec2(0.0,1.0),vec2(1.0,1.0),vec2(2.0,1.0),vec2(-2.0,0.0),vec2(-1.0,0.0),vec2(1.0,0.0),vec2(2.0,0.0),vec2(-2.0,-1.0),vec2(-1.0,-1.0),vec2(0.0,-1.0),vec2(1.0,-1.0),vec2(2.0,-1.0),vec2(-2.0,-2.0),vec2(-1.0,-2.0),vec2(0.0,-2.0),vec2(1.0,-2.0),vec2(2.0,-2.0));
-
 vec3 depthOfField(vec3 color){
 	vec3 dof = vec3(0.0);
 	
 	float z = texture2D(depthtex1, texcoord.st).r;
-	#ifdef Celshade
-	float cph = 1.0/1080.0;
-	float cpw = cph/aspectRatio;
-	for (int i = 0; i < 24; i++){
-		z = min(z,texture2D(depthtex1,texcoord.xy+vec2(cpw,cph)*celshadeoffset[i]).r);
-	}
-	#endif
 	float hand = float(z < 0.56);
 	
 	float coc = max(abs(z-centerDepthSmooth)*DOFStrength-0.0001,0.0);

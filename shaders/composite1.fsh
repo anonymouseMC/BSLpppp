@@ -21,6 +21,7 @@ uniform int worldTime;
 
 uniform float blindness;
 uniform float rainStrength;
+uniform float wetness;
 uniform float shadowFade;
 uniform float timeAngle;
 uniform float timeBrightness;
@@ -36,9 +37,10 @@ float eBS = eyeBrightnessSmooth.y/240.0;
 float sunVisibility = clamp(dot(sunVec,upVec)+0.05,0.0,0.1)/0.1;
 
 #include "lib/color/lightColor.glsl"
+#include "lib/color/lightColorDynamic.glsl"
 
 void main(){
-	vec4 color = texture2D(colortex0,texcoord.xy);
+	vec3 color = texture2D(colortex0,texcoord.xy).rgb;
 	
 	//Light Shafts
 	#ifdef LightShaft
@@ -48,10 +50,10 @@ void main(){
 	float b = clamp(blindness*2.0-1.0,0.0,1.0);
 	b = b*b;
 	
-	color.rgb += vl * vl * light * LightShaftStrength * (0.5 * (1.0-rainStrength*eBS*0.875) * shadowFade * (1.0-b));
-	//color.rgb = vl * vl;
+	color += vl * vl * light * LightShaftStrength * (0.5 * (1.0-rainStrength*eBS*0.875) * shadowFade * (1.0-b));
+	//color = vl * vl;
 	#endif
 	
 /*DRAWBUFFERS:0*/
-	gl_FragData[0] = color;
+	gl_FragData[0] = vec4(color, 1.0);
 }

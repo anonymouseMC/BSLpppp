@@ -42,11 +42,11 @@ void main(){
 	#endif
 
 	#if AA == 2
-	float temp = texture2DLod(colortex2,texcoord.xy,0).r;
+	float temp = texture2DLod(gaux3,texcoord.xy,0).r;
 	
 	vec2 prvcoord = reprojection(vec3(texcoord.xy,texture2DLod(depthtex1,texcoord.xy,0).r));
 	vec2 view = vec2(viewWidth,viewHeight);
-	vec3 tempcolor = neighbourhoodClamping(color,texture2DLod(colortex2,prvcoord.xy,0).gba,1.0/view);
+	vec3 tempcolor = neighbourhoodClamping(color,texture2DLod(gaux3,prvcoord.xy,0).gba,1.0/view);
 	
 	vec2 velocity = (texcoord.xy-prvcoord.xy)*view;
 	float blendfactor = float(prvcoord.x > 0.0 && prvcoord.x < 1.0 && prvcoord.y > 0.0 && prvcoord.y < 1.0);
@@ -64,7 +64,7 @@ void main(){
 /*DRAWBUFFERS:1*/
 	gl_FragData[0] = vec4(color,1.0);
 	#if AA == 2
-/*DRAWBUFFERS:12*/
+/*DRAWBUFFERS:16*/
 	gl_FragData[1] = vec4(temp,tempcolor);
 	#endif
 }

@@ -14,7 +14,7 @@ Note : gbuffers_basic, gbuffers_entities, gbuffers_hand, gbuffers_terrain, gbuff
 #define Desaturation
 #define DesaturationFactor 1.0 //[2.0 1.5 1.0 0.5 0.0]
 //#define DisableTexture
-#define EmissiveBrightness 1.00 //[0.00 0.05 0.10 0.15 0.20 0.25 0.30 0.35 0.40 0.45 0.50 0.55 0.60 0.65 0.70 0.75 0.80 0.85 0.90 0.95 1.00]
+#define EmissiveBrightness 1.00 //[0.00 0.05 0.10 0.15 0.20 0.25 0.30 0.35 0.40 0.45 0.50 0.55 0.60 0.65 0.70 0.75 0.80 0.85 0.90 0.95 1.00 1.05 1.10 1.15 1.20 1.25 1.30 1.35 1.40 1.45 1.50 1.55 1.60 1.65 1.70 1.75 1.80 1.85 1.90 1.95 2.00]
 #define EmissiveRecolor
 //#define LightmapBanding
 
@@ -37,15 +37,6 @@ varying vec3 upVec;
 
 varying vec4 color;
 
-#ifdef RPSupport
-varying float dist;
-varying vec3 binormal;
-varying vec3 tangent;
-varying vec3 viewVector;
-varying vec4 vtexcoordam;
-varying vec4 vtexcoord;
-#endif
-
 uniform int frameCounter;
 uniform int isEyeInWater;
 uniform int worldTime;
@@ -66,28 +57,10 @@ uniform mat4 shadowModelView;
 
 uniform sampler2D texture;
 
-#ifdef RPSupport
-uniform sampler2D specular;
-uniform sampler2D normals;
-#endif
-
 float luma(vec3 color){
 	return dot(color,vec3(0.299, 0.587, 0.114));
 }
 
-#ifdef RPSupport
-vec2 dcdx = dFdx(texcoord.xy);
-vec2 dcdy = dFdy(texcoord.xy);
-
-vec4 readTexture(vec2 coord){
-	return texture2DGradARB(texture,fract(coord)*vtexcoordam.pq+vtexcoordam.st,dcdx,dcdy);
-}
-vec4 readNormal(vec2 coord){
-	return texture2DGradARB(normals,fract(coord)*vtexcoordam.pq+vtexcoordam.st,dcdx,dcdy);
-}
-
-float mincoord = 1.0/4096.0;
-#endif
 
 #include "lib/color/dimensionColor.glsl"
 #include "lib/color/torchColor.glsl"
@@ -101,38 +74,6 @@ void main(){
 	//Texture
 	vec4 albedo = texture2D(texture, texcoord) * vec4(color.rgb,1.0);
 	vec3 newnormal = normal;
-	
-	#ifdef RPSupport
-	vec2 newcoord = vtexcoord.st*vtexcoordam.pq+vtexcoordam.st;
-	vec2 coord = vtexcoord.st;
-	float pomfade = clamp((dist-POMDistance)/32.0,0.0,1.0);
-	
-	#ifdef RPSPOM
-	if (dist < POMDistance+32.0){
-		vec3 normalmap = readNormal(vtexcoord.st).xyz*2.0-1.0;
-		float normalcheck = normalmap.x + normalmap.y + normalmap.z;
-		if (viewVector.z < 0.0 && readNormal(vtexcoord.st).a < (1.0-1.0/POMQuality) && normalcheck > -2.999){
-			vec2 interval = viewVector.xy * 0.05 * (1.0-pomfade) * POMDepth / (-viewVector.z * POMQuality);
-			for (int i = 0; i < POMQuality; i++) {
-				if (readNormal(coord).a < 1.0-float(i)/POMQuality) coord = coord+interval;
-				else break;
-			}
-			if (coord.t < mincoord) {
-				if (readTexture(vec2(coord.s,mincoord)).a == 0.0) {
-					coord.t = mincoord;
-					discard;
-				}
-			}
-			newcoord = fract(coord.st)*vtexcoordam.pq+vtexcoordam.st;
-			albedo = texture2DGradARB(texture, newcoord,dcdx,dcdy) * vec4(color.rgb,1.0);
-		}
-	}
-	#endif
-	
-	float smoothness = 0.0;
-	float f0 = 0.0;
-	vec3 rawalbedo = vec3(0.0);
-	#endif
 	
 	if (albedo.a > 0.0){
 		//NDC Coordinate
@@ -157,16 +98,6 @@ void main(){
 		}
 		#else
 		if (recolor > 0.9) albedo.rgb *=  0.5 * luma(albedo.rgb) + 0.25;
-		#endif
-		
-		//Normal Mapping
-		#ifdef RPSupport
-		vec3 normalmap = texture2DGradARB(normals,newcoord.xy,dcdx,dcdy).xyz*2.0-1.0;
-		mat3 tbnMatrix = mat3(tangent.x, binormal.x, normal.x,
-							tangent.y, binormal.y, normal.y,
-							tangent.z, binormal.z, normal.z);
-		
-		if (abs(normalmap.x) + abs(normalmap.y) + abs(normalmap.z) < 2.999) newnormal = normalize(normalmap * tbnMatrix);
 		#endif
 		
 		//Convert to linear color space
@@ -229,11 +160,4 @@ void main(){
 	
 /* DRAWBUFFERS:0 */
 	gl_FragData[0] = albedo;
-	#ifdef RPSupport
-	#ifdef RPSReflection
-/* DRAWBUFFERS:036 */
-	gl_FragData[1] = vec4(smoothness,f0,0.0,1.0);
-	gl_FragData[2] = vec4(newnormal*0.5+0.5,1.0);
-	#endif
-	#endif
 }

@@ -13,13 +13,13 @@ Note : gbuffers_basic, gbuffers_entities, gbuffers_hand, gbuffers_terrain, gbuff
 #define Desaturation
 #define DesaturationFactor 1.0 //[2.0 1.5 1.0 0.5 0.0]
 //#define DisableTexture
-#define EmissiveBrightness 1.00 //[0.00 0.05 0.10 0.15 0.20 0.25 0.30 0.35 0.40 0.45 0.50 0.55 0.60 0.65 0.70 0.75 0.80 0.85 0.90 0.95 1.00]
+#define EmissiveBrightness 1.00 //[0.00 0.05 0.10 0.15 0.20 0.25 0.30 0.35 0.40 0.45 0.50 0.55 0.60 0.65 0.70 0.75 0.80 0.85 0.90 0.95 1.00 1.05 1.10 1.15 1.20 1.25 1.30 1.35 1.40 1.45 1.50 1.55 1.60 1.65 1.70 1.75 1.80 1.85 1.90 1.95 2.00]
 
 #define ShadowColor
 #define ShadowFilter
 
 const int shadowMapResolution = 2048; //[1024 2048 3072 4096 8192]
-const float shadowDistance = 256.0; //[128.0 256.0 512.0 1024.0]
+const float shadowDistance = 256.0; //[128.0 144.0 160.0 176.0 192.0 208.0 224.0 240.0 256.0 512.0 1024.0]
 const float shadowMapBias = 1.0-25.6/shadowDistance;
 
 varying float mat;
@@ -40,6 +40,7 @@ uniform int worldTime;
 uniform float frameTimeCounter;
 uniform float nightVision;
 uniform float rainStrength;
+uniform float wetness;
 uniform float screenBrightness;
 uniform float shadowFade;
 uniform float timeAngle;
@@ -75,6 +76,7 @@ float gradNoise(){
 }
 
 #include "lib/color/lightColor.glsl"
+#include "lib/color/lightColorDynamic.glsl"
 #include "lib/color/torchColor.glsl"
 #include "lib/common/spaceConversion.glsl"
 
@@ -108,13 +110,8 @@ void main(){
 		#endif
 		
 		//Lightmap
-		#ifdef LightmapBanding
-		float torchmap = clamp(floor(lmcoord.x*14.999) / 14, 0.0, 1.0);
-		float skymap = clamp(floor(lmcoord.y*14.999) / 14, 0.0, 1.0);
-		#else
 		float torchmap = clamp(lmcoord.x, 0.0, 1.0);
 		float skymap = clamp(lmcoord.y, 0.0, 1.0);
-		#endif
 		
 		//Shadows
 		float shadow = 0.0;

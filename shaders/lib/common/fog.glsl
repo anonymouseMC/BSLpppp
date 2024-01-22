@@ -25,7 +25,7 @@ vec3 calcBlindFog(vec3 color, vec3 fragpos, float blindness){
 	float b = clamp(blindness*2.0-1.0,0.0,1.0);
 	b = b*b;
 	float fog = length(fragpos)/(5.0/b);
-	fog = (1.0-exp(-6.0*fog*fog*fog))*b;
+	fog = (1.0-exp(-3.0*fog))*b;
 	return mix(color,vec3(0.0),fog);
 }
 

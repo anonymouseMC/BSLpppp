@@ -16,7 +16,7 @@ https://www.bitslablab.com
 #define ShadowColor
 
 const int shadowMapResolution = 2048; //[1024 2048 3072 4096 8192]
-const float shadowDistance = 256.0; //[128.0 256.0 512.0 1024.0]
+const float shadowDistance = 256.0; //[128.0 144.0 160.0 176.0 192.0 208.0 224.0 240.0 256.0 512.0 1024.0]
 const float shadowMapBias = 1.0-25.6/shadowDistance;
 
 const bool colortex5Clear = false;

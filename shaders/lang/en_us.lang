@@ -8,7 +8,6 @@ profile.Ultra=Ultra
 
 #Screens
 screen.Visual=Visual
-screen.RPSupport=Resource Pack Support Config
 
 screen.PostProcess=Post Process
 screen.ColorGrading=Color Grading & Tonemap Config
@@ -53,20 +52,10 @@ screen.Terrain=Waving Blocks
 screen.World=World
 
 #Settings
-option.About=BSL v7.1.02.2
-value.About.0=by Capt Tatsu
+option.About=BSL++
+value.About.0=based from BSL v7.1.02.2
 
 #Visual
-#	RPSupport
-option.RPSupport=Resource Pack Support
-option.RPSFormat=Specular Format
-option.RPSReflection=Specular Reflection
-option.RPSPOM=Parallax Occlusion Mapping
-option.RPSShadow=Parallax Self Shadowing
-option.POMQuality=POM Quality
-option.POMDepth=POM Depth
-option.POMDistance=POM Distance
-option.POMShadowAngle=POM Shadow Angle
 #	Generic
 option.AO=Ambient Occlusion
 option.AOStrength=AO Strength
@@ -74,15 +63,8 @@ option.LightShaft=Light Shafts
 option.LightShaftStrength=Light Shaft Strength
 option.Reflection=Reflection
 option.ReflectionPrevious=Reflect Translucents
-option.Celshade=Black Outline
-option.LightmapBanding=Lightmap Banding
 option.BumpyEdge=Bumpy Edge
 option.DisableTexture=White World
-
-value.RPSFormat.0=Old
-value.RPSFormat.1=PBR
-value.RPSFormat.2=PBR + Emissive
-value.RPSFormat.3=Continuum
 
 #PostProcess
 #	ColorGrading
@@ -289,6 +271,7 @@ value.SkyBrightness.0.465=Low
 value.SkyBrightness.0.450=Medium
 value.SkyBrightness.0.415=High
 value.SkyBrightness.0.325=Very High
+
 #   Generic
 option.Clouds=Clouds
 option.Stars=Stars
@@ -296,6 +279,8 @@ option.RoundSunMoon=Round Sun & Moon
 option.SkyDesaturation=Sky Desaturation
 option.SkyBrightness=Sky Brightness
 option.SkyboxBrightness=Skybox Brightness
+option.SunBrightness=Sun Brightness
+option.moonBrightness=Moon Brightness
 
 #Water
 option.WaterNormals=Normals
@@ -307,6 +292,7 @@ option.WaterPersistance=Persistance
 option.WaterSize=Size
 option.WaterSharpness=Sharpness
 option.WaterSpeed=Speed
+option.WaterRefract=Refraction
 
 value.WaterNormals.0=OFF
 value.WaterNormals.1=Default
@@ -353,15 +339,8 @@ option.LightShaft.comment=Adds volumetric rays from sun / moon. §a[+]§rThis ef
 option.LightShaftStrength.comment=Adjusts light shafts strength.
 option.Reflection.comment=Enables screen space reflection.
 option.ReflectionPrevious.comment=Allows translucents to be reflected by using previous frame. §c[-]§rMay cause reflection not showing at all on screenshot (caused by screenshot size setting). §c[-]§rIncompatible with some GPUs.
-option.Celshade.comment=Enables black outline.
-option.LightmapBanding.comment=Enables lightmap banding.
 option.BumpyEdge.comment=Enables bumpy edge.
 option.DisableTexture.comment=Replaces textures with flat white albedo.
-option.RPSupport.comment=Enables specular mapping, specular reflections, normal mapping, and self-shadowed POM. §c[-]§rHeavy performance impact
-option.RPSFormat.comment=Toggle specular map format. Old : red-smoothness. PBR : red-smoothness green-metalness. PBR + Emissive : red-smoothness green-metalness blue-emissive. Continuum : red-f0 blue-smoothness (emissive not supported yet).
-option.RPSReflection.comment=Enables specular map based screen space reflection.
-option.RPSPOM.comment=Enables parallax occlusion mapping.
-option.RPSShadow.comment=Enables extra shadows on surfaces with depth/parallax map. Does not require POM to be enabled.
 option.POMQuality.comment=Adjusts POM samples.
 option.POMDepth.comment=Adjusts POM depth.
 option.POMDistance.comment=Adjusts how far POM and parallax shadows are rendered.

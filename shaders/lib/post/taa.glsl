@@ -6,7 +6,7 @@ uniform mat4 gbufferProjectionInverse;
 uniform mat4 gbufferPreviousModelView;
 uniform mat4 gbufferModelViewInverse;
 
-uniform sampler2D colortex2;
+uniform sampler2D gaux3;
 uniform sampler2D depthtex1;
 
 //Previous frame reprojection from Chocapic13
