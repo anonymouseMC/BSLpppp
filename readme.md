@@ -1,6 +1,10 @@
 ### (BSL++)++
-
 Forked from: BSL v7.1.02.2
+
+Fork of BSL Extended to add some better modded support.
+
+
+Licence info:
 
 The changes described in this repository by anonymouseMC are dedicated to the public domain.
 
